@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Flag Duel - The Ultimate Country Quiz</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#112;
+    --panel:#112;
+    --text:#eef;
+    --muted:#9ac;
+	--muted-bg:rgba(255,255,255,.10);
+    --p1:#4af;
+    --p2:#f58;
+    --good:#3d9;
+	--good-bg:rgba(53,211,154,.40);
+    --bad:#f67;
+	--bad-bg:rgba(255,96,119,.40);
+    --border:rgba(255,255,255,.40);
+    --radius-lg:18px;
+    --radius-md:10px;
+	--radius-sm:6px;
+  }
+
+  * { box-sizing:border-box; }
+
+  html, body {
+    width:100%;
+    height:100%;
+    margin:0;
+    overflow:hidden;
+  }
+
+  body {
+    height:100dvh;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    user-select:none;
+    position:relative;
+    isolation:isolate;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  button {
+    font:inherit;
+    border:0;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+
+  /* =========================================================
+     BACKGROUND
+     A wireframe globe (meridians + parallels) sits behind
+     everything, slowly spinning. A soft glow sits above it,
+     centered on the flag. Both are decorative and inert.
+     ========================================================= */
+  .globe-bg {
+    position:fixed;
+    inset:0;
+    z-index:-2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    pointer-events:none;
+    color:rgba(140,170,255,.20);
+  }
+  .globe-bg::after {
+    content: "";
+    position: absolute;
+    width: min(80vmin, 600px);
+    height: min(80vmin, 600px);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(77, 163, 255, 0.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+
+  .globe-bg svg {
+    width:min(140vmin,1300px);
+    height:min(140vmin,1300px);
+    animation:globeSpin 140s linear infinite;
+    transform-origin:center;
+  }
+
+  @keyframes globeSpin {
+    from { transform:rotate(0deg); }
+    to   { transform:rotate(360deg); }
+  }
+
+  body::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:radial-gradient(circle at 50% 44%, rgba(120,150,255,.14), transparent 45%);
+  }
+
+  @media (prefers-reduced-motion:reduce) {
+    .globe-bg svg { animation:none; }
+  }
+
+  /* =========================================================
+     LAYOUT
+     ========================================================= */
+  .game {
+    width:100%;
+    height:100%;
+    display:grid;
+    grid-template-columns:minmax(120px,1fr) minmax(240px,2fr) minmax(120px,1fr);
+  }
+
+  .player {
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    align-items:center;
+    margin:16px;
+    padding:24px 20px;
+    position:relative;
+    overflow:hidden;
+    border-radius:var(--radius-lg);
+    border:1.5px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.14),
+      inset 0 -36px 50px -34px rgba(0,0,0,.55),
+      0 24px 50px rgba(0,0,0,.35);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+
+  .player.p1 {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 45%),
+      linear-gradient(135deg, rgba(77,163,255,.24), rgba(77,163,255,.03) 65%),
+      rgba(17,24,43,.4);
+    border-color:rgba(77,163,255,.30);
+  }
+
+  .player.p2 {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 45%),
+      linear-gradient(225deg, rgba(255,95,143,.24), rgba(255,95,143,.03) 65%),
+      rgba(17,24,43,.4);
+    border-color:rgba(255,95,143,.30);
+  }
+
+  .name {
+    font-size:clamp(18px,2vw,28px);
+    font-weight:950;
+    letter-spacing:-0.06em;
+	white-space: nowrap;
+  }
+
+  .p1 .name { color:var(--p1); }
+  .p2 .name { color:var(--p2); }
+
+  /* =========================================================
+     SCORE + COUNTDOWN RING
+     A thin ring around each player's score depletes as the
+     round timer runs out. No digits — just a clock-like arc.
+     ========================================================= */
+  .score-wrap {
+    position:relative;
+    width:clamp(112px,10vw,152px);
+    height:clamp(112px,10vw,152px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:8px 0 24px;
+  }
+
+  .score-wrap.danger { animation:ringDanger 1s ease-in-out infinite; }
+
+  @keyframes ringDanger {
+    0%,100% { transform:scale(1); }
+    50%     { transform:scale(1.06); }
+  }
+
+  .score-ring {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    transform:rotate(-90deg);
+    pointer-events:none;
+  }
+
+  .ring-track {
+    fill:none;
+    stroke:rgba(255,255,255,.1);
+    stroke-width:6;
+  }
+
+  .ring-progress {
+    fill:none;
+    stroke-width:6;
+    stroke-linecap:round;
+    transition:stroke-dashoffset .95s linear, stroke .3s ease;
+  }
+
+  .p1 .ring-progress { stroke:var(--p1); }
+  .p2 .ring-progress { stroke:var(--p2); }
+  .ring-progress.danger { stroke:var(--bad); }
+
+  .score {
+    font-size:clamp(38px,4.4vw,62px);
+    font-weight:1000;
+    line-height:1;
+    text-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+
+  .score.hit { animation:scoreHit .4s ease; }
+
+  @keyframes scoreHit {
+    0%   { color:var(--text); transform:scale(1); }
+    30%  { color:var(--bad); transform:scale(1.1); }
+    100% { color:var(--text); transform:scale(1); }
+  }
+
+  /* Penalty amount that floats up and fades above a player's score */
+  .score-pop {
+    position:absolute;
+    top:78px;
+    left:50%;
+    transform:translateX(-50%);
+    font-weight:1000;
+    font-size:22px;
+    color:var(--bad);
+    text-shadow:0 4px 14px rgba(0,0,0,.5);
+    pointer-events:none;
+    z-index:6;
+    animation:scorePop 1s ease-out forwards;
+  }
+
+  @keyframes scorePop {
+    0%   { opacity:0; transform:translate(-50%,0) scale(.8); }
+    15%  { opacity:1; transform:translate(-50%,-8px) scale(1.1); }
+    100% { opacity:0; transform:translate(-50%,-52px) scale(1); }
+  }
+
+  /* Small burst fired from a correct-answer button */
+  .particle {
+    position:fixed;
+    top:0;
+    left:0;
+    width:16px;
+    height:16px;
+    margin:-4px 0 0 -4px;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:30;
+    animation:particleBurst .7s ease-out forwards;
+  }
+
+  @keyframes particleBurst {
+    0%   { transform:translate(0,0) scale(1); opacity:1; }
+    100% { transform:translate(var(--dx),var(--dy)) scale(.3); opacity:0; }
+  }
+
+  /* Confetti fired when the game-over overlay appears */
+  .confetti {
+    position:fixed;
+    top:-20px;
+    border-radius:2px;
+    pointer-events:none;
+    z-index:30;
+    animation-name:confettiFall;
+    animation-timing-function:linear;
+    animation-fill-mode:forwards;
+  }
+
+  @keyframes confettiFall {
+    0%   { transform:translateY(0) rotate(0deg); opacity:1; }
+    100% { transform:translateY(110vh) rotate(720deg); opacity:.9; }
+  }
+
+  .answers {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    width:100%;
+  }
+
+  .answer {
+    min-height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:12px 10px;
+    border-radius:var(--radius-md);
+    color:var(--text);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
+      rgba(17,24,43,.6);
+    border:1.5px solid var(--border);
+    font-weight:850;
+    font-size:clamp(12px,1.15vw,16px);
+    line-height:1.15;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.22),
+      inset 0 -10px 16px -10px rgba(0,0,0,.55),
+      0 8px 22px rgba(0,0,0,.3);
+    transition:transform .08s,filter .15s,background .15s,border-color .15s,opacity .2s,box-shadow .15s;
+  }
+
+  .answer:hover:not(:disabled) {
+    filter:brightness(1.15);
+    transform:translateY(-2px);
+									   
+  }
+
+  .answer:active:not(:disabled) {
+    transform:translateY(1px) scale(.98);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.1),
+      inset 0 6px 14px rgba(0,0,0,.45);
+  }
+
+  .answer:disabled { cursor:default; }
+
+  
+  /* --- Colori pulsanti Player 1 (Azzurro) --- */
+  .p1 .answer {
+    background: 
+      linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
+      rgba(77, 163, 255, 0.12); /* Tinta azzurra */
+    border-color: rgba(77, 163, 255, 0.35);
+  }
+  
+  .p1 .answer:hover:not(:disabled) {
+    background: 
+      linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
+      rgba(77, 163, 255, 0.25);
+    border-color: var(--p1); /* Bordo acceso all'hover */
+  }
+
+  /* --- Colori pulsanti Player 2 (Rosa) --- */
+  .p2 .answer {
+    background: 
+      linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
+      rgba(255, 95, 143, 0.12); /* Tinta rosa */
+    border-color: rgba(255, 95, 143, 0.35);
+  }
+  
+  .p2 .answer:hover:not(:disabled) {
+    background: 
+      linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
+      rgba(255, 95, 143, 0.25);
+    border-color: var(--p2); /* Bordo acceso all'hover */
+  }
+  
+  
+  
+
+  .answer.correct {
+    background:var(--good-bg);
+    border-color:var(--good);
+  }
+
+  .answer.wrong {
+    background:var(--bad-bg);
+    border-color:var(--bad);
+    opacity:.75;
+  }
+
+  /* Eliminated by the opponent's wrong guess (not this player's own attempt) */
+  .answer.eliminated {
+    opacity:.4;
+    filter:grayscale(.5);
+    text-decoration:line-through;
+  }
+
+  .center {
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:32px 8px;
+    gap:16px;
+  }
+
+  .topbar {
+    position:absolute;
+    top:18px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:20px;
+    white-space:nowrap;
+  }
+
+  .badge {
+    padding:8px 64px;
+    border-radius:var(--radius-sm);
+    background:var(--muted-bg);
+    xxxcolor:var(--muted);
+    font-size:12px;
+    font-weight:850;
+	border:1px solid var(--border);
+	xxxbackground:linear-gradient(90deg,var(--p1),var(--p2));						
+  }
+
+  .control {
+    color:var(--text);
+    background:rgba(255,255,255,.07);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:8px 11px;
+    font-size:11px;
+    font-weight:850;
+  }
+
+  .control:hover { background:rgba(255,255,255,.15); }
+
+  /* =========================================================
+     FLAG
+     No filled background behind the image — no white bars in
+     the letterbox gaps. The image keeps object-fit:contain so
+     the whole flag is always visible (important for a guessing
+     game), and the fabric motion comes from an SVG turbulence
+     filter (slow, 9s cycle) instead of fake animated borders.
+     ========================================================= */
+  .flag-stage {
+    position:relative;
+    width:min(620px,90%);
+    aspect-ratio:5/4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:transparent;
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+  }
+
+  .flag-image {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    filter:url(#flagWave) drop-shadow(0 10px 22px rgba(0,0,0,.5));
+    transform-origin:0% 50%;
+    animation:flagSway 6s ease-in-out infinite;								  
+	xxxborder: 1.5px solid var(--border);
+    object-fit: cover;
+    width: 99%;
+	height: 99%;
+  }
+
+  @keyframes flagSway {
+    0%,100% { transform:rotate(0deg); }
+    50%     { transform:rotate(.6deg); }
+  }
+
+  @media (prefers-reduced-motion:reduce) {
+    .flag-image {
+      animation:none;
+      filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));
+    }
+  }
+
+  /* =========================================================
+     DIFFICULTY STARS
+     A small row of stars below the flag showing how hard the
+     current country is to guess. Purely presentational — driven
+     entirely by the country's "level" field, no gameplay effect.
+     ========================================================= */
+  .difficulty-stars {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+  }
+
+  .difficulty-stars .star {
+    font-size:clamp(15px,1.6vw,20px);
+    line-height:1;
+    color:rgba(255,255,255,.16);
+    text-shadow:0 2px 6px rgba(0,0,0,.35);
+    transition:color .25s ease, text-shadow .25s ease;
+  }
+
+  .difficulty-stars .star.filled {
+    color:#ffd166;
+    text-shadow:0 0 10px rgba(255,209,102,.5),0 2px 6px rgba(0,0,0,.35);
+  }
+
+  /* =========================================================
+     END-OF-GAME / START OVERLAY
+     ========================================================= */
+  .overlay {
+    position:fixed;
+    inset:0;
+    z-index:20;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(4,7,15,.80);
+    backdrop-filter:blur(10px);
+  }
+
+  .overlay.show { display:flex; }
+
+  .modal {
+    width:min(440px,90vw);
+    padding:32px;
+    border-radius:var(--radius-lg);
+    background:var(--panel);
+    border:1px solid var(--border);
+    text-align:center;
+    box-shadow:0 30px 100px rgba(0,0,0,.5);
+  }
+
+  .modal h1 { margin:0 0 12px; font-size:30px; }
+
+  .result { color:var(--muted); line-height:1.6; }
+
+  .restart, .play-btn {
+    width:100%;
+    margin-top:22px;
+    padding:15px;
+    border-radius:var(--radius-md);
+    color:white;
+    font-weight:950;
+    background:linear-gradient(90deg,var(--p1),var(--p2));
+	border:1.5px solid var(--border);
+  }
+
+  /* Animated title on the start screen */
+  .title-anim, .subtitle-anim {
+    font-size:clamp(30px,5vw,46px);
+    font-weight:1000;
+    letter-spacing:0.06em;
+    margin:0;
+    background:linear-gradient(90deg,var(--p1),#ffffff,var(--p2));
+    background-size:200% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    animation:titleShine 3.5s ease-in-out infinite;
+	margin: 0;
+  }
+  
+  .subtitle-anim {
+	font-size:clamp(20px,3vw,35px);
+	margin: -6px 0 24px 0;
+	letter-spacing:-0.08em;
+	color:transparent;
+  }
+
+  @keyframes titleShine {
+    0%,100% { background-position:0% 50%; }
+    50%     { background-position:100% 50%; }
+  }
+
+  .subtitle {
+    color:var(--muted);
+    line-height:1.6;
+    margin:0;
+    font-size:14px;
+  }
+
+  .play-btn {
+					
+				   
+						 
+																				  
+    xxxanimation:playPulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes playPulse {
+    0%,100% { transform:scale(1); box-shadow:0 10px 30px rgba(77,163,255,.35),0 10px 30px rgba(255,95,143,.25); }
+    50%     { transform:scale(1.035); box-shadow:0 14px 40px rgba(77,163,255,.5),0 14px 40px rgba(255,95,143,.4); }
+  }
+
+  /* =========================================================
+     MOBILE
+     These are the ONLY rules allowed to change layout/sizes
+     below the breakpoints — nothing outside a media query may
+     override them, or responsiveness silently breaks again.
+     ========================================================= */
+  @media (orientation:portrait), (max-width:700px) {
+    .game {
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:minmax(40%,1fr) minmax(60%,1fr);
+    }
+
+    .center {
+      grid-column:1 / -1;
+      grid-row:1;
+      padding:36px 12px 12px;
+      gap:8px;
+											
+    }
+
+    .player.p1 { grid-column:1; grid-row:2; }
+    .player.p2 { grid-column:2; grid-row:2; }
+    .player { margin:8px; padding:14px 8px; border-radius:16px; }
+
+    .flag-stage { width:min(88vw,480px); max-height:35vh; }
+
+    .score-wrap { width:clamp(76px,22vw,100px); height:clamp(76px,22vw,100px); margin:4px 0 12px; }
+    .score { font-size:clamp(24px,8vw,36px); }
+
+    .answers {
+      width:97%;
+      gap:8px;
+	  flex: 1;						
+    }
+
+    .answer { 
+		min-height:50px; padding:8px 6px; border-radius:var(--radius-sm); font-size:11.5px; 
+		flex: 1;
+	}
+
+    .topbar {
+      top:8px;
+      gap:10px;
+					 
+      justify-content:center;
+						 
+      row-gap:6px;
+    }
+
+    .control { font-size:10px; padding:6px 18px; }
+	.badge { font-size:10px; padding:6px 36px; }
+  }
+
+  @media (max-width:360px) {									   
+										   
+    .answer { min-height:50px; }
+  }
+
+  @media (max-height:560px) and (orientation:landscape) {
+    .game {
+      grid-template-columns:minmax(160px,1fr) minmax(320px,2fr) minmax(160px,1fr);
+      grid-template-rows:1fr;
+    }
+
+    .center { grid-column:2; grid-row:1; padding:16px; gap:10px; border-bottom:0; }
+    .player.p1 { grid-column:1; grid-row:1; }
+    .player.p2 { grid-column:3; grid-row:1; }
+    .player { margin:6px; padding:10px; border-radius:14px; }
+
+    .answers { flex-direction:column; gap:6px; }
+    .answer { min-height:48px; padding:6px; font-size:11px; }
+
+    .score-wrap { width:clamp(60px,10vw,80px); height:clamp(60px,10vw,80px); margin:4px 0 10px; }
+    .score { font-size:clamp(20px,4vw,30px); }
+    .flag-stage { width:min(60vw,420px); max-height:60vh; }
+    .topbar { top:6px; }
+  }
+  
+.playercontainer {
+	display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+@media (orientation:landscape) {
+	.playercontainer {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 24px;
+	}
+}
+</style>
+</head>
+
+<body>
+
+<!-- Decorative wireframe globe: meridians + parallels, slowly spinning -->
+<div class="globe-bg" aria-hidden="true">
+  <svg viewBox="0 0 400 400" fill="none" stroke="currentColor" stroke-width="1.4">
+    <circle cx="200" cy="200" r="190" />
+    <line x1="200" y1="10" x2="200" y2="390" />
+    
+	<ellipse cx="200" cy="200" rx="145" ry="190" />
+    <ellipse cx="200" cy="200" rx="85" ry="190" />
+    <ellipse cx="200" cy="200" rx="25" ry="190" />
+    
+	<line x1="53" y1="80" x2="347" y2="80" />
+	<line x1="20" y1="140" x2="380" y2="140" />
+											 
+    <line x1="20" y1="260" x2="380" y2="260" />
+    <line x1="53" y1="320" x2="347" y2="320" />
+	
+	<line x1="115" y1="30" x2="285" y2="30" />
+	<line x1="115" y1="370" x2="285" y2="370" />
+  </svg>
+</div>
+
+<!-- SVG filter for the flag's fabric motion: turbulence-driven displacement
+     (the ripple) plus a diffuse-lighting sheen using the same turbulence as
+     a bump map, masked to the flag's own shape so the highlight travels
+     with the fabric instead of floating over the empty letterbox area. -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden">
+  <filter id="flagWave" x="-20%" y="-20%" width="140%" height="140%">
+	<!-- modificare numOctaves -->
+    <feTurbulence type="fractalNoise" numOctaves="2" seed="4" result="noise">
+      <animate attributeName="baseFrequency" dur="9s" values="0.004 0.014;0.006 0.018;0.004 0.014" repeatCount="indefinite" />
+    </feTurbulence>
+
+	<!-- modificare scale -->
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+
+	<!-- modificare specularExponent -->
+    <feSpecularLighting in="noise" lighting-color="#ffffff" specularConstant="0.75" specularExponent="42" surfaceScale="3" result="light">
+      <feDistantLight azimuth="230" elevation="45">
+        <animate attributeName="azimuth" dur="9s" values="195;265;195" repeatCount="indefinite" />
+      </feDistantLight>
+    </feSpecularLighting>
+
+    <feComposite in="light" in2="displaced" operator="in" result="sheen" />
+
+    <feBlend in="displaced" in2="sheen" mode="screen" />
+  </filter>
+</svg>
+
+																								  
+																								 
+																								  
+																							  
+
+<div class="game">
+
+  <section class="player p1">
+<div class="playercontainer">
+    <div class="name">PLAYER 1</div>
+
+    <div id="scoreWrap1" class="score-wrap">
+      <svg class="score-ring" viewBox="0 0 130 130">
+        <circle class="ring-track" cx="65" cy="65" r="58"></circle>
+        <circle id="ring1" class="ring-progress" cx="65" cy="65" r="58" stroke-dasharray="364.42"></circle>
+      </svg>
+      <div id="score1" class="score">60</div>
+    </div>
+</div>
+
+    <div id="answers1" class="answers">
+      <button class="answer"></button>
+      <button class="answer"></button>
+      <button class="answer"></button>
+      <button class="answer"></button>
+    </div>
+  </section>
+
+  <main class="center">
+    <div class="topbar">
+      <button id="newGame" class="control">RESTART ⟳</button>
+      <span id="round" class="badge">Round 1</span>
+											  
+      <button id="mute" class="control">🔊 SOUND</button>
+    </div>
+
+    <div id="flagStage" class="flag-stage">
+      <img id="flagImage" class="flag-image" alt="Flag to guess">
+    </div>
+
+    <div id="difficultyStars" class="difficulty-stars" role="img" aria-label="Difficulty"></div>
+  </main>
+
+  <section class="player p2">
+<div class="playercontainer">
+    <div class="name">PLAYER 2</div>
+
+    <div id="scoreWrap2" class="score-wrap">
+      <svg class="score-ring" viewBox="0 0 130 130">
+        <circle class="ring-track" cx="65" cy="65" r="58"></circle>
+        <circle id="ring2" class="ring-progress" cx="65" cy="65" r="58" stroke-dasharray="364.42"></circle>
+      </svg>
+      <div id="score2" class="score">60</div>
+    </div>
+</div>
+    <div id="answers2" class="answers">
+      <button class="answer"></button>
+      <button class="answer"></button>
+      <button class="answer"></button>
+      <button class="answer"></button>
+    </div>
+  </section>
+
+</div>
+
+<div id="startOverlay" class="overlay show">
+  <div class="modal">
+    <h1 class="title-anim">🌍 FLAG DUEL</h1>
+	<p class="subtitle-anim">The Ultimate Country Quiz</h1>
+    <p class="subtitle">Guess the flag before your rival does. Wrong or slow answers cost you points — first player to hit zero loses.</p>
+    <button id="playBtn" class="play-btn">PLAY ▶︎</button>
+  </div>
+</div>
+
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <h1 id="winner">🏆 Game Over</h1>
+    <div id="result" class="result"></div>
+    <button id="restart" class="restart">RESTART ⟳</button>
+  </div>
+</div>
+
+
+	<audio id="bgMusic" loop preload="auto"><source src="./flagd-music.mp3" type="audio/mpeg"></audio>
+	<audio id="gameover" preload="auto"><source src="./flagd-gameover.mp3" type="audio/mpeg"></audio>
+	<audio id="correctSfx" preload="auto"><source src="./flagd-correct.mp3" type="audio/mpeg"></audio>
+	<audio id="wrongSfx" preload="auto"><source src="./flagd-wrong.mp3" type="audio/mpeg"></audio>
+<script>
+(() => {
+  /*
+   * Flag assets:
+   * ./res/it.svg
+   * ./res/fr.svg
+   * ...
+   *
+   * The file is loaded from the ISO code ("code" field).
+   * To add a country, just add an entry here and the matching
+   * SVG inside ./res, named after its ISO code.
+   */
+const countries = [
+  { name: "Afghanistan", code: "af", level: 3 },
+  { name: "Albania", code: "al", level: 2 },
+  { name: "Algeria", code: "dz", level: 2 },
+  { name: "Andorra", code: "ad", level: 3 },
+  { name: "Angola", code: "ao", level: 3 },
+  { name: "Antigua and Barbuda", code: "ag", level: 3 },
+  { name: "Argentina", code: "ar", level: 1 },
+  { name: "Armenia", code: "am", level: 3 },
+  { name: "Australia", code: "au", level: 1 },
+  { name: "Austria", code: "at", level: 2 },
+  { name: "Azerbaijan", code: "az", level: 3 },
+  { name: "Bahamas", code: "bs", level: 3 },
+  { name: "Bahrain", code: "bh", level: 3 },
+  { name: "Bangladesh", code: "bd", level: 2 },
+  { name: "Barbados", code: "bb", level: 3 },
+  { name: "Belarus", code: "by", level: 3 },
+  { name: "Belgium", code: "be", level: 1 },
+  { name: "Belize", code: "bz", level: 3 },
+  { name: "Benin", code: "bj", level: 3 },
+  { name: "Bhutan", code: "bt", level: 3 },
+  { name: "Bolivia", code: "bo", level: 3 },
+  { name: "Bosnia and Herzegovina", code: "ba", level: 2 },
+  { name: "Botswana", code: "bw", level: 3 },
+  { name: "Brazil", code: "br", level: 1 },
+  { name: "Brunei", code: "bn", level: 3 },
+  { name: "Bulgaria", code: "bg", level: 2 },
+  { name: "Burkina Faso", code: "bf", level: 3 },
+  { name: "Burundi", code: "bi", level: 3 },
+  { name: "Cabo Verde", code: "cv", level: 3 },
+  { name: "Cambodia", code: "kh", level: 3 },
+  { name: "Cameroon", code: "cm", level: 2 },
+  { name: "Canada", code: "ca", level: 1 },
+  { name: "Central African Republic", code: "cf", level: 3 },
+  { name: "Chad", code: "td", level: 3 },
+  { name: "Chile", code: "cl", level: 2 },
+  { name: "China", code: "cn", level: 1 },
+  { name: "Colombia", code: "co", level: 2 },
+  { name: "Comoros", code: "km", level: 3 },
+  { name: "Congo", code: "cg", level: 3 },
+  { name: "Costa Rica", code: "cr", level: 3 },
+  { name: "Croatia", code: "hr", level: 2 },
+  { name: "Cuba", code: "cu", level: 2 },
+  { name: "Cyprus", code: "cy", level: 2 },
+  { name: "Czech Republic", code: "cz", level: 2 },
+  { name: "Democratic Republic of the Congo", code: "cd", level: 3 },
+  { name: "Denmark", code: "dk", level: 2 },
+  { name: "Djibouti", code: "dj", level: 3 },
+  { name: "Dominica", code: "dm", level: 3 },
+  { name: "Dominican Republic", code: "do", level: 3 },
+  { name: "Ecuador", code: "ec", level: 2 },
+  { name: "Egypt", code: "eg", level: 2 },
+  { name: "El Salvador", code: "sv", level: 3 },
+  { name: "Equatorial Guinea", code: "gq", level: 3 },
+  { name: "Eritrea", code: "er", level: 3 },
+  { name: "Estonia", code: "ee", level: 2 },
+  { name: "Eswatini", code: "sz", level: 3 },
+  { name: "Ethiopia", code: "et", level: 3 },
+  { name: "Fiji", code: "fj", level: 3 },
+  { name: "Finland", code: "fi", level: 1 },
+  { name: "France", code: "fr", level: 1 },
+  { name: "Gabon", code: "ga", level: 3 },
+  { name: "Gambia", code: "gm", level: 3 },
+  { name: "Georgia", code: "ge", level: 2 },
+  { name: "Germany", code: "de", level: 1 },
+  { name: "Ghana", code: "gh", level: 3 },
+  { name: "Greece", code: "gr", level: 1 },
+  { name: "Grenada", code: "gd", level: 3 },
+  { name: "Guatemala", code: "gt", level: 3 },
+  { name: "Guinea", code: "gn", level: 3 },
+  { name: "Guinea-Bissau", code: "gw", level: 3 },
+  { name: "Guyana", code: "gy", level: 3 },
+  { name: "Haiti", code: "ht", level: 3 },
+  { name: "Honduras", code: "hn", level: 3 },
+  { name: "Hungary", code: "hu", level: 2 },
+  { name: "Iceland", code: "is", level: 2 },
+  { name: "India", code: "in", level: 1 },
+  { name: "Indonesia", code: "id", level: 2 },
+  { name: "Iran", code: "ir", level: 2 },
+  { name: "Iraq", code: "iq", level: 2 },
+  { name: "Ireland", code: "ie", level: 2 },
+  { name: "Israel", code: "il", level: 1 },
+  { name: "Italy", code: "it", level: 1 },
+  { name: "Ivory Coast", code: "ci", level: 3 },
+  { name: "Jamaica", code: "jm", level: 1 },
+  { name: "Japan", code: "jp", level: 1 },
+  { name: "Jordan", code: "jo", level: 3 },
+  { name: "Kazakhstan", code: "kz", level: 3 },
+  { name: "Kenya", code: "ke", level: 2 },
+  { name: "Kiribati", code: "ki", level: 3 },
+  { name: "Kuwait", code: "kw", level: 3 },
+  { name: "Kyrgyzstan", code: "kg", level: 3 },
+  { name: "Laos", code: "la", level: 3 },
+  { name: "Latvia", code: "lv", level: 3 },
+  { name: "Lebanon", code: "lb", level: 2 },
+  { name: "Lesotho", code: "ls", level: 3 },
+  { name: "Liberia", code: "lr", level: 3 },
+  { name: "Libya", code: "ly", level: 3 },
+  { name: "Liechtenstein", code: "li", level: 3 },
+  { name: "Lithuania", code: "lt", level: 3 },
+  { name: "Luxembourg", code: "lu", level: 3 },
+  { name: "Madagascar", code: "mg", level: 3 },
+  { name: "Malawi", code: "mw", level: 3 },
+  { name: "Malaysia", code: "my", level: 2 },
+  { name: "Maldives", code: "mv", level: 3 },
+  { name: "Mali", code: "ml", level: 3 },
+  { name: "Malta", code: "mt", level: 3 },
+  { name: "Marshall Islands", code: "mh", level: 3 },
+  { name: "Mauritania", code: "mr", level: 3 },
+  { name: "Mauritius", code: "mu", level: 3 },
+  { name: "Mexico", code: "mx", level: 1 },
+  { name: "Micronesia", code: "fm", level: 3 },
+  { name: "Moldova", code: "md", level: 3 },
+  { name: "Monaco", code: "mc", level: 3 },
+  { name: "Mongolia", code: "mn", level: 3 },
+  { name: "Montenegro", code: "me", level: 3 },
+  { name: "Morocco", code: "ma", level: 2 },
+  { name: "Mozambique", code: "mz", level: 3 },
+  { name: "Myanmar", code: "mm", level: 3 },
+  { name: "Namibia", code: "na", level: 3 },
+  { name: "Nauru", code: "nr", level: 3 },
+  { name: "Nepal", code: "np", level: 1 },
+  { name: "Netherlands", code: "nl", level: 2 },
+  { name: "New Zealand", code: "nz", level: 2 },
+  { name: "Nicaragua", code: "ni", level: 3 },
+  { name: "Niger", code: "ne", level: 3 },
+  { name: "Nigeria", code: "ng", level: 2 },
+  { name: "North Korea", code: "kp", level: 2 },
+  { name: "North Macedonia", code: "mk", level: 2 },
+  { name: "Norway", code: "no", level: 1 },
+  { name: "Oman", code: "om", level: 3 },
+  { name: "Pakistan", code: "pk", level: 2 },
+  { name: "Palau", code: "pw", level: 3 },
+  { name: "Palestine", code: "ps", level: 2 },
+  { name: "Panama", code: "pa", level: 2 },
+  { name: "Papua New Guinea", code: "pg", level: 3 },
+  { name: "Paraguay", code: "py", level: 3 },
+  { name: "Peru", code: "pe", level: 2 },
+  { name: "Philippines", code: "ph", level: 2 },
+  { name: "Poland", code: "pl", level: 2 },
+  { name: "Portugal", code: "pt", level: 1 },
+  { name: "Qatar", code: "qa", level: 2 },
+  { name: "Romania", code: "ro", level: 3 },
+  { name: "Russia", code: "ru", level: 1 },
+  { name: "Rwanda", code: "rw", level: 3 },
+  { name: "Saint Kitts and Nevis", code: "kn", level: 3 },
+  { name: "Saint Lucia", code: "lc", level: 3 },
+  { name: "Saint Vincent and the Grenadines", code: "vc", level: 3 },
+  { name: "Samoa", code: "ws", level: 3 },
+  { name: "San Marino", code: "sm", level: 3 },
+  { name: "Sao Tome and Principe", code: "st", level: 3 },
+  { name: "Saudi Arabia", code: "sa", level: 2 },
+  { name: "Senegal", code: "sn", level: 3 },
+  { name: "Serbia", code: "rs", level: 2 },
+  { name: "Seychelles", code: "sc", level: 3 },
+  { name: "Sierra Leone", code: "sl", level: 3 },
+  { name: "Singapore", code: "sg", level: 2 },
+  { name: "Slovakia", code: "sk", level: 3 },
+  { name: "Slovenia", code: "si", level: 3 },
+  { name: "Solomon Islands", code: "sb", level: 3 },
+  { name: "Somalia", code: "so", level: 3 },
+  { name: "South Africa", code: "za", level: 1 },
+  { name: "South Korea", code: "kr", level: 1 },
+  { name: "South Sudan", code: "ss", level: 3 },
+  { name: "Spain", code: "es", level: 1 },
+  { name: "Sri Lanka", code: "lk", level: 3 },
+  { name: "Sudan", code: "sd", level: 3 },
+  { name: "Suriname", code: "sr", level: 3 },
+  { name: "Sweden", code: "se", level: 1 },
+  { name: "Switzerland", code: "ch", level: 1 },
+  { name: "Syria", code: "sy", level: 3 },
+  { name: "Tajikistan", code: "tj", level: 3 },
+  { name: "Tanzania", code: "tz", level: 3 },
+  { name: "Thailand", code: "th", level: 2 },
+  { name: "Timor-Leste", code: "tl", level: 3 },
+  { name: "Togo", code: "tg", level: 3 },
+  { name: "Tonga", code: "to", level: 3 },
+  { name: "Trinidad and Tobago", code: "tt", level: 3 },
+  { name: "Tunisia", code: "tn", level: 2 },
+  { name: "Turkey", code: "tr", level: 1 },
+  { name: "Turkmenistan", code: "tm", level: 3 },
+  { name: "Tuvalu", code: "tv", level: 3 },
+  { name: "Uganda", code: "ug", level: 3 },
+  { name: "Ukraine", code: "ua", level: 1 },
+  { name: "United Arab Emirates", code: "ae", level: 2 },
+  { name: "United Kingdom", code: "gb", level: 1 },
+  { name: "United States of America", code: "us", level: 1 },
+  { name: "Uruguay", code: "uy", level: 2 },
+  { name: "Uzbekistan", code: "uz", level: 3 },
+  { name: "Vanuatu", code: "vu", level: 3 },
+  { name: "Vatican City", code: "va", level: 2 },
+  { name: "Venezuela", code: "ve", level: 2 },
+  { name: "Vietnam", code: "vn", level: 2 },
+  { name: "Yemen", code: "ye", level: 3 },
+  { name: "Zambia", code: "zm", level: 3 },
+  { name: "Zimbabwe", code: "zw", level: 3 }
+];
+
+  const ROUND_TIME = 10;
+  const START_SCORE = 60;
+  const MAX_DIFFICULTY = 3;
+							   
+  const RING_R = 58;
+  const RING_CIRC = 2 * Math.PI * RING_R;
+
+  let score = [START_SCORE, START_SCORE];
+  let round = 0;
+  let time = ROUND_TIME;
+  let current = null;
+  let options = [];
+  let roundEnded = false;
+  let playerAnswered = [false, false];
+  let timerId = null;
+  let muted = false;
+
+  const $ = id => document.getElementById(id);
+  const answerBoxes = [
+    [...document.querySelectorAll("#answers1 .answer")],
+    [...document.querySelectorAll("#answers2 .answer")]
+  ];
+
+
+  const bgMusic = $("bgMusic");
+  const sfxGameOver = $("gameover");
+  const sfxCorrect = $("correctSfx");
+  const sfxWrong = $("wrongSfx");
+  const allAudio = [bgMusic, sfxGameOver, sfxCorrect, sfxWrong];
+
+  function playSfx(el) {
+    if (muted) return;
+    el.currentTime = 0;
+    el.play().catch(() => {});
+  }
+  
+  function shuffle(array) {
+    const a = [...array];
+
+    for (let i=a.length-1; i>0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+
+    return a;
+  }
+
+  function buildOptions() {
+    /*
+     * Exactly 4 countries: 1 correct answer + 3 random decoys.
+     * Both players get the SAME four options, shuffled.
+     */
+    const wrong = shuffle(
+      countries.filter(country => country !== current)
+    ).slice(0,3);
+
+    options = shuffle([current, ...wrong]);
+  }
+
+  function renderOptions() {
+    for (let player = 0; player < 2; player++) {
+      answerBoxes[player].forEach((button, index) => {
+        const country = options[index];
+
+        button.textContent = country.name;
+        button.dataset.name = country.name;
+        // Reset completo delle classi e degli attributi
+        button.className = "answer";
+        button.disabled = false;
+        button.blur();          // Rimuove il focus tastiera/touch
+      });
+    }
+	document.body.focus();
+  }
+
+  function renderDifficultyStars(level) {
+    /*
+     * Draws MAX_DIFFICULTY stars below the flag, filling in as
+     * many as the current country's difficulty level. Purely
+     * visual — it has no effect on scoring or timing.
+     */
+    const container = $("difficultyStars");
+    container.innerHTML = "";
+    container.setAttribute("aria-label", `Difficulty ${level} of ${MAX_DIFFICULTY}`);
+
+    for (let i = 1; i <= MAX_DIFFICULTY; i++) {
+      const star = document.createElement("span");
+      star.className = "star" + (i <= level ? " filled" : "");
+      star.textContent = "★";
+      container.appendChild(star);
+    }
+  }
+
+  function startGame() {
+    clearInterval(timerId);
+
+    score = [START_SCORE, START_SCORE];
+    round = 0;
+
+    updateScores();
+    $("overlay").classList.remove("show");
+
+    if (!muted) bgMusic.play().catch(() => {});
+
+    nextRound();
+  }
+
+  function nextRound() {
+    round++;
+    roundEnded = false;
+    playerAnswered = [false, false];
+    time = ROUND_TIME;
+
+    current = countries[Math.floor(Math.random() * countries.length)];
+
+    $("flagImage").src = `./res/${current.code}.svg`;
+    $("flagImage").alt = `Flag of ${current.name}`;
+
+    renderDifficultyStars(current.level);
+
+    buildOptions();
+    renderOptions();
+
+    $("round").textContent = `Round ${round}`;
+
+    updateTimer();
+
+    clearInterval(timerId);
+
+    timerId = setInterval(() => {
+      time--;
+      updateTimer();
+
+      if (time <= 0) {
+        clearInterval(timerId);
+
+        if (!roundEnded) {
+          finishRound();
+        }
+      }
+    },1000);
+  }
+
+  /*
+   * Drains the countdown ring around each player's score.
+   * No digits are shown — just the shrinking arc, turning red
+   * (and gently pulsing) in the last 3 seconds.
+   */
+  function updateTimer() {
+    const fraction = Math.max(time,0) / ROUND_TIME;
+    const offset = RING_CIRC * (1 - fraction);
+    const danger = time <= 3;
+
+    [1,2].forEach(n => {
+      const ring = $(`ring${n}`);
+      ring.style.strokeDashoffset = offset;
+      ring.classList.toggle("danger", danger);
+      $(`scoreWrap${n}`).classList.toggle("danger", danger);
+    });
+  }
+
+  function updateScores() {
+    $("score1").textContent = score[0];
+    $("score2").textContent = score[1];
+  }
+
+  function applyPenalty(player, amount) {
+    /*
+     * amount is always a positive number to subtract.
+     * Updates the score and shows the visual feedback
+     * (score flash + a floating "-N" above the player).
+     */
+    if (amount <= 0) return;
+
+    score[player] -= amount;
+    updateScores();
+
+    const scoreEl = $(`score${player+1}`);
+    scoreEl.classList.remove("hit");
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add("hit");
+
+    const container = document.querySelectorAll(".player")[player];
+    const pop = document.createElement("div");
+    pop.className = "score-pop";
+    pop.textContent = `-${amount}`;
+    container.appendChild(pop);
+    pop.addEventListener("animationend", () => pop.remove());
+  }
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function burstParticles(x, y, colors) {
+    if (reducedMotion) return;
+
+    const count = 16;
+
+    for (let i=0; i<count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.5 - 0.25);
+      const distance = 80 + Math.random() * 60;
+
+      const p = document.createElement("div");
+      p.className = "particle";
+      p.style.left = `${x}px`;
+      p.style.top = `${y}px`;
+      p.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+      p.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+      document.body.appendChild(p);
+      p.addEventListener("animationend", () => p.remove());
+    }
+  }
+
+  function spawnConfetti(winnerColor) {
+    if (reducedMotion) return;
+
+    const palette = ["var(--p1)","var(--p2)","var(--good)","#ffd166","#ffffff"];
+    if (winnerColor) palette.push(winnerColor, winnerColor);
+
+    const count = 100;
+
+    for (let i=0; i<count; i++) {
+      const size = 6 + Math.random() * 12;
+
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = `${Math.random() * 100}vw`;
+      c.style.width = `${size}px`;
+      c.style.height = `${size * 0.4}px`;
+      c.style.background = palette[Math.floor(Math.random() * palette.length)];
+      c.style.animationDuration = `${2.5 + Math.random() * 1.5}s`;
+      c.style.animationDelay = `${Math.random() * 0.5}s`;
+
+      document.body.appendChild(c);
+      c.addEventListener("animationend", () => c.remove());
+    }
+  }
+
+  function isGameOver() {
+    return score[0] <= 0 || score[1] <= 0;
+  }
+
+  function finishRound() {
+    roundEnded = true;
+    clearInterval(timerId);
+
+	// Regola 3: applica 10s di penalità a chi non ha risposto allo scadere del tempo
+	let numPlayersToPenalize = 0;
+    for (let p = 0; p < 2; p++) {
+      if (!playerAnswered[p]) {
+        applyPenalty(p, 10);
+		numPlayersToPenalize++;
+      }
+    }
+	
+	if(numPlayersToPenalize===2) playSfx(sfxWrong);
+	
+	// Pulizia visiva immediata
+    answerBoxes.flat().forEach(button => {
+      button.disabled = true;
+      button.classList.remove("wrong", "eliminated"); // Rimuove il rosso e il grigio subito
+
+      if (button.dataset.name === current.name) {
+        button.classList.add("correct"); // Mostra solo la risposta corretta
+      }
+    });
+	
+    answerBoxes.flat().forEach(button => {
+      button.disabled = true;
+
+      if (button.dataset.name === current.name) {
+        button.classList.add("correct");
+      }
+    });
+
+    setTimeout(() => {
+      if (isGameOver()) {
+        endGame();
+      } else {
+        nextRound();
+      }
+    },900);
+  }
+
+  function answer(player,index) {
+    if (roundEnded || playerAnswered[player]) return;
+
+    playerAnswered[player] = true;
+
+    const selected = options[index];
+    const correct = selected.name === current.name;
+    const opponent = player === 0 ? 1 : 0;
+
+    if (correct) {
+      /*
+       * Each player starts at 60 points. The longer it takes to
+       * answer correctly, the more points are lost (1 point per
+       * second elapsed). If the opponent hasn't answered yet,
+       * they lose the flat duel penalty for being beaten to it.
+       */
+      const elapsed = ROUND_TIME - time;
+      applyPenalty(player, elapsed);
+
+      answerBoxes[player][index].classList.remove("wrong");
+      answerBoxes[player][index].classList.add("correct");
+
+      const rect = answerBoxes[player][index].getBoundingClientRect();
+      const playerColor = player === 0 ? "var(--p1)" : "var(--p2)";
+      burstParticles(rect.left + rect.width/2, rect.top + rect.height/2, ["var(--good)", playerColor, "#ffd166"]);
+
+      playSfx(sfxCorrect);
+
+      finishRound();
+    } else {
+      /*
+       * A wrong answer costs whatever time is left on the clock
+       * (a fast wrong guess is punished harder than a late one).
+       * That specific wrong option is also removed for the
+       * opponent, so they can't pick it either.
+       */
+      applyPenalty(player, 5);
+
+      answerBoxes[player][index].classList.add("wrong");
+      answerBoxes[player].forEach(button => { button.disabled = true; });
+
+      const opponentMatch = answerBoxes[opponent].find(button => button.dataset.name === selected.name);
+      if (opponentMatch && !opponentMatch.disabled) {
+        opponentMatch.disabled = true;
+        opponentMatch.classList.add("eliminated");
+      }
+
+      playSfx(sfxWrong);
+
+      /*
+       * End the round immediately (revealing the correct answer)
+       * if the opponent has also already used their attempt, or
+       * if this penalty already ended the game.
+       */
+      if (playerAnswered[opponent] || isGameOver()) {
+        finishRound();
+      }
+    }
+  }
+
+  function endGame() {
+    clearInterval(timerId);
+
+    let title;
+    let winnerColor = null;
+
+    if (score[0] > score[1]) {
+      title = "🏆 PLAYER 1 wins!";
+      winnerColor = "var(--p1)";
+    } else if (score[1] > score[0]) {
+      title = "🏆 PLAYER 2 wins!";
+      winnerColor = "var(--p2)";
+    } else {
+      title = "🤝 Draw!";
+    }
+
+    $("winner").textContent = title;
+
+    $("result").innerHTML =
+      `Player 1: <strong>${score[0]}</strong> points<br>` +
+      `Player 2: <strong>${score[1]}</strong> points`;
+
+    $("overlay").classList.add("show");
+    spawnConfetti(winnerColor);
+
+    bgMusic.pause();
+    playSfx(sfxGameOver);
+  }
+
+  answerBoxes.forEach((playerButtons,player) => {
+    playerButtons.forEach((button,index) => {
+      button.addEventListener("click",() => answer(player,index));
+    });
+  });
+
+  $("newGame").addEventListener("click",startGame);
+  $("restart").addEventListener("click",startGame);
+
+  $("playBtn").addEventListener("click", () => {
+    $("startOverlay").classList.remove("show");
+    startGame();
+  });
+
+  $("mute").addEventListener("click",() => {
+    muted = !muted;
+    $("mute").textContent = muted ? "🔇 SOUND" : "🔊 SOUND";
+    allAudio.forEach(a => { a.muted = muted; });
+  });
+})();
+</script>
+</body>
+</html>
