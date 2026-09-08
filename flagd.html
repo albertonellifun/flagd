@@ -19,7 +19,7 @@
     --bad:#f67;
 	--bad-bg:rgba(255,96,119,.40);
     --border:rgba(255,255,255,.40);
-    --radius-lg:18px;
+    --radius-lg:16px;
     --radius-md:10px;
 	--radius-sm:6px;
   }
@@ -167,8 +167,10 @@
      ========================================================= */
   .score-wrap {
     position:relative;
-    width:clamp(112px,10vw,152px);
-    height:clamp(112px,10vw,152px);
+    xxxwidth:clamp(112px,10vw,152px);
+    xxxheight:clamp(112px,10vw,152px);
+	width:15vw;
+	height:15vh;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -288,13 +290,13 @@
   }
 
   .answer {
-    min-height:64px;
+    min-height:10vh;
     display:flex;
     align-items:center;
     justify-content:center;
     text-align:center;
     padding:12px 10px;
-    border-radius:var(--radius-md);
+	border-radius:var(--radius-md);
     color:var(--text);
     background:
       linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
@@ -302,7 +304,7 @@
     border:1.5px solid var(--border);
     font-weight:850;
     font-size:clamp(12px,1.15vw,16px);
-    line-height:1.15;
+    line-height:0.85;
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.22),
       inset 0 -10px 16px -10px rgba(0,0,0,.55),
@@ -393,7 +395,7 @@
     left:50%;
     transform:translateX(-50%);
     display:flex;
-    gap:20px;
+    gap:10px;
     white-space:nowrap;
   }
 
@@ -402,7 +404,7 @@
     border-radius:var(--radius-sm);
     background:var(--muted-bg);
     xxxcolor:var(--muted);
-    font-size:12px;
+    font-size:16px;
     font-weight:850;
 	border:1px solid var(--border);
 	xxxbackground:linear-gradient(90deg,var(--p1),var(--p2));						
@@ -414,7 +416,7 @@
     border:1px solid var(--border);
     border-radius:var(--radius-sm);
     padding:8px 11px;
-    font-size:11px;
+    font-size:14px;
     font-weight:850;
   }
 
@@ -460,11 +462,10 @@
   }
 
   @media (prefers-reduced-motion:reduce) {
-    .flag-image {
-      animation:none;
-      filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));
-    }
+    .flag-image { animation:none; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5)); }
+	.flag-sheen { animation:none; opacity:0; }
   }
+  
 
   /* =========================================================
      DIFFICULTY STARS
@@ -605,7 +606,13 @@
 
     .flag-stage { width:min(88vw,480px); max-height:35vh; }
 
-    .score-wrap { width:clamp(76px,22vw,100px); height:clamp(76px,22vw,100px); margin:4px 0 12px; }
+    .score-wrap { 
+		xxxwidth:clamp(76px,22vw,100px); 
+		xxxheight:clamp(76px,22vw,100px); 
+		width: 15vw;
+		height: 15vh;
+		margin:4px 0 12px; 
+	}
     .score { font-size:clamp(24px,8vw,36px); }
 
     .answers {
@@ -615,26 +622,23 @@
     }
 
     .answer { 
-		min-height:50px; padding:8px 6px; border-radius:var(--radius-sm); font-size:11.5px; 
+		min-height:8vh; padding:8px 6px; border-radius:var(--radius-sm); font-size:11.5px; 
 		flex: 1;
 	}
 
     .topbar {
       top:8px;
-      gap:10px;
-					 
       justify-content:center;
-						 
-      row-gap:6px;
+	  row-gap:6px;
     }
 
-    .control { font-size:10px; padding:6px 18px; }
-	.badge { font-size:10px; padding:6px 36px; }
+    .control { font-size:12px; padding:6px 18px; }
+	.badge { font-size:12px; padding:6px 36px; }
   }
 
   @media (max-width:360px) {									   
 										   
-    .answer { min-height:50px; }
+    .answer { min-height:8vh; }
   }
 
   @media (max-height:560px) and (orientation:landscape) {
@@ -649,7 +653,7 @@
     .player { margin:6px; padding:10px; border-radius:14px; }
 
     .answers { flex-direction:column; gap:6px; }
-    .answer { min-height:48px; padding:6px; font-size:11px; }
+    .answer { min-height:8vh; padding:6px; font-size:11px; }
 
     .score-wrap { width:clamp(60px,10vw,80px); height:clamp(60px,10vw,80px); margin:4px 0 10px; }
     .score { font-size:clamp(20px,4vw,30px); }
@@ -662,6 +666,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
+	max-height: 18vh;
 }
 
 @media (orientation:landscape) {
@@ -702,32 +707,34 @@
      a bump map, masked to the flag's own shape so the highlight travels
      with the fabric instead of floating over the empty letterbox area. -->
 <svg width="0" height="0" style="position:absolute;overflow:hidden">
-  <filter id="flagWave" x="-20%" y="-20%" width="140%" height="140%">
+  <filter id="flagWave" x="-10%" y="-10%" width="120%" height="120%">
 	<!-- modificare numOctaves -->
     <feTurbulence type="fractalNoise" numOctaves="2" seed="4" result="noise">
-      <animate attributeName="baseFrequency" dur="9s" values="0.004 0.014;0.006 0.018;0.004 0.014" repeatCount="indefinite" />
+      <animate attributeName="baseFrequency" dur="20s" values="0.004 0.014;0.006 0.018;0.004 0.014" repeatCount="indefinite" />
     </feTurbulence>
 
-	<!-- modificare scale -->
-    <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+	<!-- modificare scale == pixel di displacement -->
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="displaced" />
 
 	<!-- modificare specularExponent -->
-    <feSpecularLighting in="noise" lighting-color="#ffffff" specularConstant="0.75" specularExponent="42" surfaceScale="3" result="light">
+    <feSpecularLighting in="noise" lighting-color="#ffffff" specularConstant="1" specularExponent="42" surfaceScale="3" result="light">
       <feDistantLight azimuth="230" elevation="45">
-        <animate attributeName="azimuth" dur="9s" values="195;265;195" repeatCount="indefinite" />
+        <!--animate attributeName="azimuth" dur="20s" values="195;265;195" repeatCount="indefinite" /-->
       </feDistantLight>
     </feSpecularLighting>
 
     <feComposite in="light" in2="displaced" operator="in" result="sheen" />
 
-    <feBlend in="displaced" in2="sheen" mode="screen" />
+    <feBlend in="displaced" in2="sheen" mode="screen" result="blended" />
+	
+	<feComponentTransfer in="blended">
+      <feFuncR type="linear" slope="1.15" intercept="-0.05"/>
+      <feFuncG type="linear" slope="1.15" intercept="-0.05"/>
+      <feFuncB type="linear" slope="1.15" intercept="-0.05"/>
+    </feComponentTransfer>
   </filter>
 </svg>
 
-																								  
-																								 
-																								  
-																							  
 
 <div class="game">
 
@@ -754,10 +761,10 @@
 
   <main class="center">
     <div class="topbar">
-      <button id="newGame" class="control">RESTART ⟳</button>
+      <button id="newGame" class="control">⟳</button><!-- RESTART -->
       <span id="round" class="badge">Round 1</span>
 											  
-      <button id="mute" class="control">🔊 SOUND</button>
+      <button id="mute" class="control">🔊</button><!-- SOUND -->
     </div>
 
     <div id="flagStage" class="flag-stage">
@@ -1036,7 +1043,7 @@ const countries = [
   let roundEnded = false;
   let playerAnswered = [false, false];
   let timerId = null;
-  let muted = false;
+  let muted = true;//false;
 
   const $ = id => document.getElementById(id);
   const answerBoxes = [
@@ -1137,7 +1144,8 @@ const countries = [
     current = countries[Math.floor(Math.random() * countries.length)];
 
     $("flagImage").src = `./res/${current.code}.svg`;
-    $("flagImage").alt = `Flag of ${current.name}`;
+	$("flagImage").alt = `Flag of ${current.name}`;
+	
 
     renderDifficultyStars(current.level);
 
@@ -1411,7 +1419,7 @@ const countries = [
 
   $("mute").addEventListener("click",() => {
     muted = !muted;
-    $("mute").textContent = muted ? "🔇 SOUND" : "🔊 SOUND";
+    $("mute").textContent = muted ? "🔇" : "🔊";//SOUND
     allAudio.forEach(a => { a.muted = muted; });
   });
 })();
