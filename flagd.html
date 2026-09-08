@@ -397,6 +397,7 @@
     display:flex;
     gap:10px;
     white-space:nowrap;
+	z-index: 2;
   }
 
   .badge {
@@ -421,6 +422,42 @@
   }
 
   .control:hover { background:rgba(255,255,255,.15); }
+
+  .region-picker { position:relative; }
+
+  .region-menu {
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    z-index:10;
+    min-width:150px;
+    padding:6px;
+    display:grid;
+    gap:3px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    background:rgba(17,17,34,.96);
+    box-shadow:0 16px 36px rgba(0,0,0,.45);
+    backdrop-filter:blur(10px);
+  }
+
+  .region-menu[hidden] { display:none; }
+
+  .region-option {
+    padding:9px 12px;
+    color:var(--text);
+    background:transparent;
+    border-radius:var(--radius-sm);
+    text-align:left;
+    font-size:13px;
+    font-weight:850;
+  }
+
+  .region-option:hover:not(:disabled),
+  .region-option.active { background:rgba(255,255,255,.14); }
+
+  .region-option.active { color:var(--p1); }
+  .region-option:disabled { opacity:.35; cursor:not-allowed; }
 
   /* =========================================================
      FLAG
@@ -447,10 +484,10 @@
     width:100%;
     height:100%;
     overflow:hidden;
-    xxxborder:1px solid rgba(255,255,255,.38);
-    xxxborder-radius:2px 5px 5px 2px;
+    border:1px solid rgba(255,255,255,.38);
+    border-radius:2px 5px 5px 2px;
     background:transparent;
-    xxxbox-shadow:0 18px 30px rgba(0,0,0,.42),inset 0 0 12px rgba(255,255,255,.18);
+    box-shadow:0 18px 30px rgba(0,0,0,.42),inset 0 0 12px rgba(255,255,255,.18);
     transform-origin:0 50%;
     clip-path:polygon(
       0 1%,9% .6%,18% .2%,27% .3%,36% .8%,45% 1.1%,54% .9%,63% .4%,72% .2%,81% .6%,90% 1.1%,100% 1.8%,
@@ -470,7 +507,7 @@
     object-fit:contain;
     z-index:1;
     pointer-events:none;
-    opacity: 0.4;
+    opacity:.32;
     filter:brightness(0) invert(1);
     mix-blend-mode:screen;
     -webkit-mask-image:linear-gradient(100deg,
@@ -795,9 +832,19 @@
 
   <main class="center">
     <div class="topbar">
-      <button id="newGame" class="control">⟳</button><!-- RESTART -->
+      <button id="newGame" class="control">↻</button><!-- RESTART -->
       <span id="round" class="badge">Round 1</span>
-											  
+      <div class="region-picker">
+        <button id="regionButton" class="control" type="button" aria-label="Select region: All" aria-haspopup="menu" aria-expanded="false" title="Region: All">🌐</button>
+        <div id="regionMenu" class="region-menu" role="menu" hidden>
+          <button class="region-option active" type="button" role="menuitem" data-region="ALL">ALL</button>
+          <button class="region-option" type="button" role="menuitem" data-region="EUROPE">EUROPE</button>
+          <button class="region-option" type="button" role="menuitem" data-region="ASIA">ASIA</button>
+          <button class="region-option" type="button" role="menuitem" data-region="AFRICA">AFRICA</button>
+          <button class="region-option" type="button" role="menuitem" data-region="AMERICA">AMERICA</button>
+          <button class="region-option" type="button" role="menuitem" data-region="OCEANIA">OCEANIA</button>
+        </div>
+      </div>
       <button id="mute" class="control">🔊</button><!-- SOUND -->
     </div>
 
@@ -846,7 +893,7 @@
   <div class="modal">
     <h1 id="winner">🏆 Game Over</h1>
     <div id="result" class="result"></div>
-    <button id="restart" class="restart">RESTART ⟳</button>
+    <button id="restart" class="restart">RESTART ↻</button>
   </div>
 </div>
 
@@ -868,207 +915,207 @@
    * SVG inside ./res, named after its ISO code.
    */
 const countries = [
-  { name: "Afghanistan", code: "af", level: 3 },
-  { name: "Albania", code: "al", level: 2 },
-  { name: "Algeria", code: "dz", level: 2 },
-  { name: "Andorra", code: "ad", level: 3 },
-  { name: "Angola", code: "ao", level: 3 },
-  { name: "Antigua and Barbuda", code: "ag", level: 3 },
-  { name: "Argentina", code: "ar", level: 1 },
-  { name: "Armenia", code: "am", level: 3 },
-  { name: "Australia", code: "au", level: 1 },
-  { name: "Austria", code: "at", level: 2 },
-  { name: "Azerbaijan", code: "az", level: 3 },
-  { name: "Bahamas", code: "bs", level: 3 },
-  { name: "Bahrain", code: "bh", level: 3 },
-  { name: "Bangladesh", code: "bd", level: 2 },
-  { name: "Barbados", code: "bb", level: 3 },
-  { name: "Belarus", code: "by", level: 3 },
-  { name: "Belgium", code: "be", level: 1 },
-  { name: "Belize", code: "bz", level: 3 },
-  { name: "Benin", code: "bj", level: 3 },
-  { name: "Bhutan", code: "bt", level: 3 },
-  { name: "Bolivia", code: "bo", level: 3 },
-  { name: "Bosnia and Herzegovina", code: "ba", level: 2 },
-  { name: "Botswana", code: "bw", level: 3 },
-  { name: "Brazil", code: "br", level: 1 },
-  { name: "Brunei", code: "bn", level: 3 },
-  { name: "Bulgaria", code: "bg", level: 2 },
-  { name: "Burkina Faso", code: "bf", level: 3 },
-  { name: "Burundi", code: "bi", level: 3 },
-  { name: "Cabo Verde", code: "cv", level: 3 },
-  { name: "Cambodia", code: "kh", level: 3 },
-  { name: "Cameroon", code: "cm", level: 2 },
-  { name: "Canada", code: "ca", level: 1 },
-  { name: "Central African Republic", code: "cf", level: 3 },
-  { name: "Chad", code: "td", level: 3 },
-  { name: "Chile", code: "cl", level: 2 },
-  { name: "China", code: "cn", level: 1 },
-  { name: "Colombia", code: "co", level: 2 },
-  { name: "Comoros", code: "km", level: 3 },
-  { name: "Congo", code: "cg", level: 3 },
-  { name: "Costa Rica", code: "cr", level: 3 },
-  { name: "Croatia", code: "hr", level: 2 },
-  { name: "Cuba", code: "cu", level: 2 },
-  { name: "Cyprus", code: "cy", level: 2 },
-  { name: "Czech Republic", code: "cz", level: 2 },
-  { name: "Democratic Republic of the Congo", code: "cd", level: 3 },
-  { name: "Denmark", code: "dk", level: 2 },
-  { name: "Djibouti", code: "dj", level: 3 },
-  { name: "Dominica", code: "dm", level: 3 },
-  { name: "Dominican Republic", code: "do", level: 3 },
-  { name: "Ecuador", code: "ec", level: 2 },
-  { name: "Egypt", code: "eg", level: 2 },
-  { name: "El Salvador", code: "sv", level: 3 },
-  { name: "Equatorial Guinea", code: "gq", level: 3 },
-  { name: "Eritrea", code: "er", level: 3 },
-  { name: "Estonia", code: "ee", level: 2 },
-  { name: "Eswatini", code: "sz", level: 3 },
-  { name: "Ethiopia", code: "et", level: 3 },
-  { name: "Fiji", code: "fj", level: 3 },
-  { name: "Finland", code: "fi", level: 1 },
-  { name: "France", code: "fr", level: 1 },
-  { name: "Gabon", code: "ga", level: 3 },
-  { name: "Gambia", code: "gm", level: 3 },
-  { name: "Georgia", code: "ge", level: 2 },
-  { name: "Germany", code: "de", level: 1 },
-  { name: "Ghana", code: "gh", level: 3 },
-  { name: "Greece", code: "gr", level: 1 },
-  { name: "Grenada", code: "gd", level: 3 },
-  { name: "Guatemala", code: "gt", level: 3 },
-  { name: "Guinea", code: "gn", level: 3 },
-  { name: "Guinea-Bissau", code: "gw", level: 3 },
-  { name: "Guyana", code: "gy", level: 3 },
-  { name: "Haiti", code: "ht", level: 3 },
-  { name: "Honduras", code: "hn", level: 3 },
-  { name: "Hungary", code: "hu", level: 2 },
-  { name: "Iceland", code: "is", level: 2 },
-  { name: "India", code: "in", level: 1 },
-  { name: "Indonesia", code: "id", level: 2 },
-  { name: "Iran", code: "ir", level: 2 },
-  { name: "Iraq", code: "iq", level: 2 },
-  { name: "Ireland", code: "ie", level: 2 },
-  { name: "Israel", code: "il", level: 1 },
-  { name: "Italy", code: "it", level: 1 },
-  { name: "Ivory Coast", code: "ci", level: 3 },
-  { name: "Jamaica", code: "jm", level: 1 },
-  { name: "Japan", code: "jp", level: 1 },
-  { name: "Jordan", code: "jo", level: 3 },
-  { name: "Kazakhstan", code: "kz", level: 3 },
-  { name: "Kenya", code: "ke", level: 2 },
-  { name: "Kiribati", code: "ki", level: 3 },
-  { name: "Kuwait", code: "kw", level: 3 },
-  { name: "Kyrgyzstan", code: "kg", level: 3 },
-  { name: "Laos", code: "la", level: 3 },
-  { name: "Latvia", code: "lv", level: 3 },
-  { name: "Lebanon", code: "lb", level: 2 },
-  { name: "Lesotho", code: "ls", level: 3 },
-  { name: "Liberia", code: "lr", level: 3 },
-  { name: "Libya", code: "ly", level: 3 },
-  { name: "Liechtenstein", code: "li", level: 3 },
-  { name: "Lithuania", code: "lt", level: 3 },
-  { name: "Luxembourg", code: "lu", level: 3 },
-  { name: "Madagascar", code: "mg", level: 3 },
-  { name: "Malawi", code: "mw", level: 3 },
-  { name: "Malaysia", code: "my", level: 2 },
-  { name: "Maldives", code: "mv", level: 3 },
-  { name: "Mali", code: "ml", level: 3 },
-  { name: "Malta", code: "mt", level: 3 },
-  { name: "Marshall Islands", code: "mh", level: 3 },
-  { name: "Mauritania", code: "mr", level: 3 },
-  { name: "Mauritius", code: "mu", level: 3 },
-  { name: "Mexico", code: "mx", level: 1 },
-  { name: "Micronesia", code: "fm", level: 3 },
-  { name: "Moldova", code: "md", level: 3 },
-  { name: "Monaco", code: "mc", level: 3 },
-  { name: "Mongolia", code: "mn", level: 3 },
-  { name: "Montenegro", code: "me", level: 3 },
-  { name: "Morocco", code: "ma", level: 2 },
-  { name: "Mozambique", code: "mz", level: 3 },
-  { name: "Myanmar", code: "mm", level: 3 },
-  { name: "Namibia", code: "na", level: 3 },
-  { name: "Nauru", code: "nr", level: 3 },
-  { name: "Nepal", code: "np", level: 1 },
-  { name: "Netherlands", code: "nl", level: 2 },
-  { name: "New Zealand", code: "nz", level: 2 },
-  { name: "Nicaragua", code: "ni", level: 3 },
-  { name: "Niger", code: "ne", level: 3 },
-  { name: "Nigeria", code: "ng", level: 2 },
-  { name: "North Korea", code: "kp", level: 2 },
-  { name: "North Macedonia", code: "mk", level: 2 },
-  { name: "Norway", code: "no", level: 1 },
-  { name: "Oman", code: "om", level: 3 },
-  { name: "Pakistan", code: "pk", level: 2 },
-  { name: "Palau", code: "pw", level: 3 },
-  { name: "Palestine", code: "ps", level: 2 },
-  { name: "Panama", code: "pa", level: 2 },
-  { name: "Papua New Guinea", code: "pg", level: 3 },
-  { name: "Paraguay", code: "py", level: 3 },
-  { name: "Peru", code: "pe", level: 2 },
-  { name: "Philippines", code: "ph", level: 2 },
-  { name: "Poland", code: "pl", level: 2 },
-  { name: "Portugal", code: "pt", level: 1 },
-  { name: "Qatar", code: "qa", level: 2 },
-  { name: "Romania", code: "ro", level: 3 },
-  { name: "Russia", code: "ru", level: 1 },
-  { name: "Rwanda", code: "rw", level: 3 },
-  { name: "Saint Kitts and Nevis", code: "kn", level: 3 },
-  { name: "Saint Lucia", code: "lc", level: 3 },
-  { name: "Saint Vincent and the Grenadines", code: "vc", level: 3 },
-  { name: "Samoa", code: "ws", level: 3 },
-  { name: "San Marino", code: "sm", level: 3 },
-  { name: "Sao Tome and Principe", code: "st", level: 3 },
-  { name: "Saudi Arabia", code: "sa", level: 2 },
-  { name: "Senegal", code: "sn", level: 3 },
-  { name: "Serbia", code: "rs", level: 2 },
-  { name: "Seychelles", code: "sc", level: 3 },
-  { name: "Sierra Leone", code: "sl", level: 3 },
-  { name: "Singapore", code: "sg", level: 2 },
-  { name: "Slovakia", code: "sk", level: 3 },
-  { name: "Slovenia", code: "si", level: 3 },
-  { name: "Solomon Islands", code: "sb", level: 3 },
-  { name: "Somalia", code: "so", level: 3 },
-  { name: "South Africa", code: "za", level: 1 },
-  { name: "South Korea", code: "kr", level: 1 },
-  { name: "South Sudan", code: "ss", level: 3 },
-  { name: "Spain", code: "es", level: 1 },
-  { name: "Sri Lanka", code: "lk", level: 3 },
-  { name: "Sudan", code: "sd", level: 3 },
-  { name: "Suriname", code: "sr", level: 3 },
-  { name: "Sweden", code: "se", level: 1 },
-  { name: "Switzerland", code: "ch", level: 1 },
-  { name: "Syria", code: "sy", level: 3 },
-  { name: "Tajikistan", code: "tj", level: 3 },
-  { name: "Tanzania", code: "tz", level: 3 },
-  { name: "Thailand", code: "th", level: 2 },
-  { name: "Timor-Leste", code: "tl", level: 3 },
-  { name: "Togo", code: "tg", level: 3 },
-  { name: "Tonga", code: "to", level: 3 },
-  { name: "Trinidad and Tobago", code: "tt", level: 3 },
-  { name: "Tunisia", code: "tn", level: 2 },
-  { name: "Turkey", code: "tr", level: 1 },
-  { name: "Turkmenistan", code: "tm", level: 3 },
-  { name: "Tuvalu", code: "tv", level: 3 },
-  { name: "Uganda", code: "ug", level: 3 },
-  { name: "Ukraine", code: "ua", level: 1 },
-  { name: "United Arab Emirates", code: "ae", level: 2 },
-  { name: "United Kingdom", code: "gb", level: 1 },
-  { name: "United States of America", code: "us", level: 1 },
-  { name: "Uruguay", code: "uy", level: 2 },
-  { name: "Uzbekistan", code: "uz", level: 3 },
-  { name: "Vanuatu", code: "vu", level: 3 },
-  { name: "Vatican City", code: "va", level: 2 },
-  { name: "Venezuela", code: "ve", level: 2 },
-  { name: "Vietnam", code: "vn", level: 2 },
-  { name: "Yemen", code: "ye", level: 3 },
-  { name: "Zambia", code: "zm", level: 3 },
-  { name: "Zimbabwe", code: "zw", level: 3 }
+  { name: "Afghanistan", code: "af", level: 3, group: "asia" },
+  { name: "Albania", code: "al", level: 2, group: "europa" },
+  { name: "Algeria", code: "dz", level: 2, group: "africa" },
+  { name: "Andorra", code: "ad", level: 3, group: "europa" },
+  { name: "Angola", code: "ao", level: 3, group: "africa" },
+  { name: "Antigua and Barbuda", code: "ag", level: 3, group: "america" },
+  { name: "Argentina", code: "ar", level: 1, group: "america" },
+  { name: "Armenia", code: "am", level: 3, group: "asia" },
+  { name: "Australia", code: "au", level: 1, group: "oceania" },
+  { name: "Austria", code: "at", level: 2, group: "europa" },
+  { name: "Azerbaijan", code: "az", level: 3, group: "asia" },
+  { name: "Bahamas", code: "bs", level: 3, group: "america" },
+  { name: "Bahrain", code: "bh", level: 3, group: "asia" },
+  { name: "Bangladesh", code: "bd", level: 2, group: "asia" },
+  { name: "Barbados", code: "bb", level: 3, group: "america" },
+  { name: "Belarus", code: "by", level: 3, group: "europa" },
+  { name: "Belgium", code: "be", level: 1, group: "europa" },
+  { name: "Belize", code: "bz", level: 3, group: "america" },
+  { name: "Benin", code: "bj", level: 3, group: "africa" },
+  { name: "Bhutan", code: "bt", level: 3, group: "asia" },
+  { name: "Bolivia", code: "bo", level: 3, group: "america" },
+  { name: "Bosnia and Herzegovina", code: "ba", level: 2, group: "europa" },
+  { name: "Botswana", code: "bw", level: 3, group: "africa" },
+  { name: "Brazil", code: "br", level: 1, group: "america" },
+  { name: "Brunei", code: "bn", level: 3, group: "asia" },
+  { name: "Bulgaria", code: "bg", level: 2, group: "europa" },
+  { name: "Burkina Faso", code: "bf", level: 3, group: "africa" },
+  { name: "Burundi", code: "bi", level: 3, group: "africa" },
+  { name: "Cabo Verde", code: "cv", level: 3, group: "africa" },
+  { name: "Cambodia", code: "kh", level: 3, group: "asia" },
+  { name: "Cameroon", code: "cm", level: 2, group: "africa" },
+  { name: "Canada", code: "ca", level: 1, group: "america" },
+  { name: "Central African Republic", code: "cf", level: 3, group: "africa" },
+  { name: "Chad", code: "td", level: 3, group: "africa" },
+  { name: "Chile", code: "cl", level: 2, group: "america" },
+  { name: "China", code: "cn", level: 1, group: "asia" },
+  { name: "Colombia", code: "co", level: 2, group: "america" },
+  { name: "Comoros", code: "km", level: 3, group: "africa" },
+  { name: "Congo", code: "cg", level: 3, group: "africa" },
+  { name: "Costa Rica", code: "cr", level: 3, group: "america" },
+  { name: "Croatia", code: "hr", level: 2, group: "europa" },
+  { name: "Cuba", code: "cu", level: 2, group: "america" },
+  { name: "Cyprus", code: "cy", level: 2, group: "europa" },
+  { name: "Czech Republic", code: "cz", level: 2, group: "europa" },
+  { name: "Democratic Republic of the Congo", code: "cd", level: 3, group: "africa" },
+  { name: "Denmark", code: "dk", level: 2, group: "europa" },
+  { name: "Djibouti", code: "dj", level: 3, group: "africa" },
+  { name: "Dominica", code: "dm", level: 3, group: "america" },
+  { name: "Dominican Republic", code: "do", level: 3, group: "america" },
+  { name: "Ecuador", code: "ec", level: 2, group: "america" },
+  { name: "Egypt", code: "eg", level: 2, group: "africa" },
+  { name: "El Salvador", code: "sv", level: 3, group: "america" },
+  { name: "Equatorial Guinea", code: "gq", level: 3, group: "africa" },
+  { name: "Eritrea", code: "er", level: 3, group: "africa" },
+  { name: "Estonia", code: "ee", level: 2, group: "europa" },
+  { name: "Eswatini", code: "sz", level: 3, group: "africa" },
+  { name: "Ethiopia", code: "et", level: 3, group: "africa" },
+  { name: "Fiji", code: "fj", level: 3, group: "oceania" },
+  { name: "Finland", code: "fi", level: 1, group: "europa" },
+  { name: "France", code: "fr", level: 1, group: "europa" },
+  { name: "Gabon", code: "ga", level: 3, group: "africa" },
+  { name: "Gambia", code: "gm", level: 3, group: "africa" },
+  { name: "Georgia", code: "ge", level: 2, group: "asia" },
+  { name: "Germany", code: "de", level: 1, group: "europa" },
+  { name: "Ghana", code: "gh", level: 3, group: "africa" },
+  { name: "Greece", code: "gr", level: 1, group: "europa" },
+  { name: "Grenada", code: "gd", level: 3, group: "america" },
+  { name: "Guatemala", code: "gt", level: 3, group: "america" },
+  { name: "Guinea", code: "gn", level: 3, group: "africa" },
+  { name: "Guinea-Bissau", code: "gw", level: 3, group: "africa" },
+  { name: "Guyana", code: "gy", level: 3, group: "america" },
+  { name: "Haiti", code: "ht", level: 3, group: "america" },
+  { name: "Honduras", code: "hn", level: 3, group: "america" },
+  { name: "Hungary", code: "hu", level: 2, group: "europa" },
+  { name: "Iceland", code: "is", level: 2, group: "europa" },
+  { name: "India", code: "in", level: 1, group: "asia" },
+  { name: "Indonesia", code: "id", level: 2, group: "asia" },
+  { name: "Iran", code: "ir", level: 2, group: "asia" },
+  { name: "Iraq", code: "iq", level: 2, group: "asia" },
+  { name: "Ireland", code: "ie", level: 2, group: "europa" },
+  { name: "Israel", code: "il", level: 1, group: "asia" },
+  { name: "Italy", code: "it", level: 1, group: "europa" },
+  { name: "Ivory Coast", code: "ci", level: 3, group: "africa" },
+  { name: "Jamaica", code: "jm", level: 1, group: "america" },
+  { name: "Japan", code: "jp", level: 1, group: "asia" },
+  { name: "Jordan", code: "jo", level: 3, group: "asia" },
+  { name: "Kazakhstan", code: "kz", level: 3, group: "asia" },
+  { name: "Kenya", code: "ke", level: 2, group: "africa" },
+  { name: "Kiribati", code: "ki", level: 3, group: "oceania" },
+  { name: "Kuwait", code: "kw", level: 3, group: "asia" },
+  { name: "Kyrgyzstan", code: "kg", level: 3, group: "asia" },
+  { name: "Laos", code: "la", level: 3, group: "asia" },
+  { name: "Latvia", code: "lv", level: 3, group: "europa" },
+  { name: "Lebanon", code: "lb", level: 2, group: "asia" },
+  { name: "Lesotho", code: "ls", level: 3, group: "africa" },
+  { name: "Liberia", code: "lr", level: 3, group: "africa" },
+  { name: "Libya", code: "ly", level: 3, group: "africa" },
+  { name: "Liechtenstein", code: "li", level: 3, group: "europa" },
+  { name: "Lithuania", code: "lt", level: 3, group: "europa" },
+  { name: "Luxembourg", code: "lu", level: 3, group: "europa" },
+  { name: "Madagascar", code: "mg", level: 3, group: "africa" },
+  { name: "Malawi", code: "mw", level: 3, group: "africa" },
+  { name: "Malaysia", code: "my", level: 2, group: "asia" },
+  { name: "Maldives", code: "mv", level: 3, group: "asia" },
+  { name: "Mali", code: "ml", level: 3, group: "africa" },
+  { name: "Malta", code: "mt", level: 3, group: "europa" },
+  { name: "Marshall Islands", code: "mh", level: 3, group: "oceania" },
+  { name: "Mauritania", code: "mr", level: 3, group: "africa" },
+  { name: "Mauritius", code: "mu", level: 3, group: "africa" },
+  { name: "Mexico", code: "mx", level: 1, group: "america" },
+  { name: "Micronesia", code: "fm", level: 3, group: "oceania" },
+  { name: "Moldova", code: "md", level: 3, group: "europa" },
+  { name: "Monaco", code: "mc", level: 3, group: "europa" },
+  { name: "Mongolia", code: "mn", level: 3, group: "asia" },
+  { name: "Montenegro", code: "me", level: 3, group: "europa" },
+  { name: "Morocco", code: "ma", level: 2, group: "africa" },
+  { name: "Mozambique", code: "mz", level: 3, group: "africa" },
+  { name: "Myanmar", code: "mm", level: 3, group: "asia" },
+  { name: "Namibia", code: "na", level: 3, group: "africa" },
+  { name: "Nauru", code: "nr", level: 3, group: "oceania" },
+  { name: "Nepal", code: "np", level: 1, group: "asia" },
+  { name: "Netherlands", code: "nl", level: 2, group: "europa" },
+  { name: "New Zealand", code: "nz", level: 2, group: "oceania" },
+  { name: "Nicaragua", code: "ni", level: 3, group: "america" },
+  { name: "Niger", code: "ne", level: 3, group: "africa" },
+  { name: "Nigeria", code: "ng", level: 2, group: "africa" },
+  { name: "North Korea", code: "kp", level: 2, group: "asia" },
+  { name: "North Macedonia", code: "mk", level: 2, group: "europa" },
+  { name: "Norway", code: "no", level: 1, group: "europa" },
+  { name: "Oman", code: "om", level: 3, group: "asia" },
+  { name: "Pakistan", code: "pk", level: 2, group: "asia" },
+  { name: "Palau", code: "pw", level: 3, group: "oceania" },
+  { name: "Palestine", code: "ps", level: 2, group: "asia" },
+  { name: "Panama", code: "pa", level: 2, group: "america" },
+  { name: "Papua New Guinea", code: "pg", level: 3, group: "oceania" },
+  { name: "Paraguay", code: "py", level: 3, group: "america" },
+  { name: "Peru", code: "pe", level: 2, group: "america" },
+  { name: "Philippines", code: "ph", level: 2, group: "asia" },
+  { name: "Poland", code: "pl", level: 2, group: "europa" },
+  { name: "Portugal", code: "pt", level: 1, group: "europa" },
+  { name: "Qatar", code: "qa", level: 2, group: "asia" },
+  { name: "Romania", code: "ro", level: 3, group: "europa" },
+  { name: "Russia", code: "ru", level: 1, group: "europa" },
+  { name: "Rwanda", code: "rw", level: 3, group: "africa" },
+  { name: "Saint Kitts and Nevis", code: "kn", level: 3, group: "america" },
+  { name: "Saint Lucia", code: "lc", level: 3, group: "america" },
+  { name: "Saint Vincent and the Grenadines", code: "vc", level: 3, group: "america" },
+  { name: "Samoa", code: "ws", level: 3, group: "oceania" },
+  { name: "San Marino", code: "sm", level: 3, group: "europa" },
+  { name: "Sao Tome and Principe", code: "st", level: 3, group: "africa" },
+  { name: "Saudi Arabia", code: "sa", level: 2, group: "asia" },
+  { name: "Senegal", code: "sn", level: 3, group: "africa" },
+  { name: "Serbia", code: "rs", level: 2, group: "europa" },
+  { name: "Seychelles", code: "sc", level: 3, group: "africa" },
+  { name: "Sierra Leone", code: "sl", level: 3, group: "africa" },
+  { name: "Singapore", code: "sg", level: 2, group: "asia" },
+  { name: "Slovakia", code: "sk", level: 3, group: "europa" },
+  { name: "Slovenia", code: "si", level: 3, group: "europa" },
+  { name: "Solomon Islands", code: "sb", level: 3, group: "oceania" },
+  { name: "Somalia", code: "so", level: 3, group: "africa" },
+  { name: "South Africa", code: "za", level: 1, group: "africa" },
+  { name: "South Korea", code: "kr", level: 1, group: "asia" },
+  { name: "South Sudan", code: "ss", level: 3, group: "africa" },
+  { name: "Spain", code: "es", level: 1, group: "europa" },
+  { name: "Sri Lanka", code: "lk", level: 3, group: "asia" },
+  { name: "Sudan", code: "sd", level: 3, group: "africa" },
+  { name: "Suriname", code: "sr", level: 3, group: "america" },
+  { name: "Sweden", code: "se", level: 1, group: "europa" },
+  { name: "Switzerland", code: "ch", level: 1, group: "europa" },
+  { name: "Syria", code: "sy", level: 3, group: "asia" },
+  { name: "Tajikistan", code: "tj", level: 3, group: "asia" },
+  { name: "Tanzania", code: "tz", level: 3, group: "africa" },
+  { name: "Thailand", code: "th", level: 2, group: "asia" },
+  { name: "Timor-Leste", code: "tl", level: 3, group: "asia" },
+  { name: "Togo", code: "tg", level: 3, group: "africa" },
+  { name: "Tonga", code: "to", level: 3, group: "oceania" },
+  { name: "Trinidad and Tobago", code: "tt", level: 3, group: "america" },
+  { name: "Tunisia", code: "tn", level: 2, group: "africa" },
+  { name: "Turkey", code: "tr", level: 1, group: "asia" },
+  { name: "Turkmenistan", code: "tm", level: 3, group: "asia" },
+  { name: "Tuvalu", code: "tv", level: 3, group: "oceania" },
+  { name: "Uganda", code: "ug", level: 3, group: "africa" },
+  { name: "Ukraine", code: "ua", level: 1, group: "europa" },
+  { name: "United Arab Emirates", code: "ae", level: 2, group: "asia" },
+  { name: "United Kingdom", code: "gb", level: 1, group: "europa" },
+  { name: "United States of America", code: "us", level: 1, group: "america" },
+  { name: "Uruguay", code: "uy", level: 2, group: "america" },
+  { name: "Uzbekistan", code: "uz", level: 3, group: "asia" },
+  { name: "Vanuatu", code: "vu", level: 3, group: "oceania" },
+  { name: "Vatican City", code: "va", level: 2, group: "europa" },
+  { name: "Venezuela", code: "ve", level: 2, group: "america" },
+  { name: "Vietnam", code: "vn", level: 2, group: "asia" },
+  { name: "Yemen", code: "ye", level: 3, group: "asia" },
+  { name: "Zambia", code: "zm", level: 3, group: "africa" },
+  { name: "Zimbabwe", code: "zw", level: 3, group: "africa" }
 ];
 
   const ROUND_TIME = 10;
   const START_SCORE = 60;
   const MAX_DIFFICULTY = 3;
-							   
+
   const RING_R = 58;
   const RING_CIRC = 2 * Math.PI * RING_R;
 
@@ -1081,6 +1128,7 @@ const countries = [
   let playerAnswered = [false, false];
   let timerId = null;
   let muted = false;
+  let selectedRegion = "ALL";
 
   const $ = id => document.getElementById(id);
   const answerBoxes = [
@@ -1112,13 +1160,22 @@ const countries = [
     return a;
   }
 
+  function getRegionGroup(region) {
+    return region === "EUROPE" ? "europa" : region.toLowerCase();
+  }
+
+  function getAvailableCountries() {
+    if (selectedRegion === "ALL") return countries;
+    return countries.filter(country => country.group === getRegionGroup(selectedRegion));
+  }
+
   function buildOptions() {
     /*
      * Exactly 4 countries: 1 correct answer + 3 random decoys.
      * Both players get the SAME four options, shuffled.
      */
     const wrong = shuffle(
-      countries.filter(country => country !== current)
+      getAvailableCountries().filter(country => country !== current)
     ).slice(0,3);
 
     options = shuffle([current, ...wrong]);
@@ -1178,7 +1235,8 @@ const countries = [
     playerAnswered = [false, false];
     time = ROUND_TIME;
 
-    current = countries[Math.floor(Math.random() * countries.length)];
+    const availableCountries = getAvailableCountries();
+    current = availableCountries[Math.floor(Math.random() * availableCountries.length)];
 
 	const flagUrl = `./res/${current.code}.svg`;
     $("flagImage").src = flagUrl;
@@ -1450,6 +1508,49 @@ const countries = [
 
   $("newGame").addEventListener("click",startGame);
   $("restart").addEventListener("click",startGame);
+
+  const regionMenu = $("regionMenu");
+  const regionButton = $("regionButton");
+  const regionOptions = [...regionMenu.querySelectorAll(".region-option")];
+
+  function closeRegionMenu() {
+    regionMenu.hidden = true;
+    regionButton.setAttribute("aria-expanded", "false");
+  }
+
+  regionOptions.forEach(option => {
+    const region = option.dataset.region;
+    const countryCount = region === "ALL"
+      ? countries.length
+      : countries.filter(country => country.group === getRegionGroup(region)).length;
+
+    option.disabled = countryCount < 4;
+    if (option.disabled) option.title = "At least 4 countries are required";
+
+    option.addEventListener("click", () => {
+      selectedRegion = region;
+      regionOptions.forEach(item => item.classList.toggle("active", item === option));
+      regionButton.setAttribute("aria-label", `Select region: ${region}`);
+      regionButton.title = `Region: ${region}`;
+      closeRegionMenu();
+
+      if (!$("startOverlay").classList.contains("show")) startGame();
+    });
+  });
+
+  regionButton.addEventListener("click", event => {
+    event.stopPropagation();
+    regionMenu.hidden = !regionMenu.hidden;
+    regionButton.setAttribute("aria-expanded", String(!regionMenu.hidden));
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".region-picker")) closeRegionMenu();
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeRegionMenu();
+  });
 
   $("playBtn").addEventListener("click", () => {
     $("startOverlay").classList.remove("show");
