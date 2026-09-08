@@ -62,7 +62,7 @@
     position:fixed;
     inset:0;
     z-index:-2;
-    display:flex;
+    xxxdisplay:flex;
     align-items:center;
     justify-content:center;
     overflow:hidden;
@@ -72,8 +72,8 @@
   .globe-bg::after {
     content: "";
     position: absolute;
-    width: min(80vmin, 600px);
-    height: min(80vmin, 600px);
+	width: 100vmax;
+    height: 100vmax;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(77, 163, 255, 0.35) 0%, transparent 70%);
     pointer-events: none;
@@ -81,8 +81,8 @@
 
 
   .globe-bg svg {
-    width:min(140vmin,1300px);
-    height:min(140vmin,1300px);
+	width: 100vmax;
+    height: 100vmax;
     animation:globeSpin 140s linear infinite;
     transform-origin:center;
   }
