@@ -1370,43 +1370,51 @@ const countries = [
   function finishRound() {
     roundEnded = true;
     clearInterval(timerId);
-
-	// Regola 3: applica 10s di penalità a chi non ha risposto allo scadere del tempo
-	let numPlayersToPenalize = 0;
+  
+    // Applica 10s di penalità a chi non ha risposto allo scadere del tempo
+    let numPlayersToPenalize = 0;
+  
     for (let p = 0; p < 2; p++) {
       if (!playerAnswered[p]) {
         applyPenalty(p, 10);
-		numPlayersToPenalize++;
+        numPlayersToPenalize++;
       }
     }
-	
-	if(numPlayersToPenalize===2) playSfx(sfxWrong);
-	
-	// Pulizia visiva immediata
+  
+    if (numPlayersToPenalize === 2) playSfx(sfxWrong);
+  
+    // Blocca tutti i pulsanti
     answerBoxes.flat().forEach(button => {
       button.disabled = true;
       button.classList.remove("wrong", "eliminated"); // Rimuove il rosso e il grigio subito
-
-      if (button.dataset.name === current.name) {
-        button.classList.add("correct"); // Mostra solo la risposta corretta
-      }
     });
-	
-    answerBoxes.flat().forEach(button => {
-      button.disabled = true;
-
-      if (button.dataset.name === current.name) {
-        button.classList.add("correct");
-      }
-    });
-
+  
+    /*
+     * Se nessuno ha risposto correttamente (timeout o doppio errore),
+     * mostra la risposta corretta a entrambi.
+     */
+    const someoneAnsweredCorrectly = answerBoxes.some(buttons =>
+      buttons.some(button =>
+        button.dataset.name === current.name &&
+        button.classList.contains("correct")
+      )
+    );
+  
+    if (!someoneAnsweredCorrectly || 1) {
+      answerBoxes.flat().forEach(button => {
+        if (button.dataset.name === current.name) {
+          button.classList.add("correct");
+        }
+      });
+    }
+  
     setTimeout(() => {
       if (isGameOver()) {
         endGame();
       } else {
         nextRound();
       }
-    },900);
+    }, 900);
   }
 
   function answer(player,index) {
