@@ -312,10 +312,25 @@
     transition:transform .08s,filter .15s,background .15s,border-color .15s,opacity .2s,box-shadow .15s;
   }
 
-  .answer:hover:not(:disabled) {
-    filter:brightness(1.15);
-    transform:translateY(-2px);
-									   
+  @media (hover:hover) and (pointer:fine) {
+    .answer:hover:not(:disabled) {
+      filter:brightness(1.15);
+      transform:translateY(-2px);
+    }
+
+    .p1 .answer:hover:not(:disabled) {
+      background: 
+        linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
+        rgba(77, 163, 255, 0.25);
+      border-color:var(--p1);
+    }
+
+    .p2 .answer:hover:not(:disabled) {
+      background: 
+        linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
+        rgba(255, 95, 143, 0.25);
+      border-color:var(--p2);
+    }
   }
 
   .answer:active:not(:disabled) {
@@ -336,13 +351,6 @@
     border-color: rgba(77, 163, 255, 0.35);
   }
   
-  .p1 .answer:hover:not(:disabled) {
-    background: 
-      linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
-      rgba(77, 163, 255, 0.25);
-    border-color: var(--p1); /* Bordo acceso all'hover */
-  }
-
   /* --- Colori pulsanti Player 2 (Rosa) --- */
   .p2 .answer {
     background: 
@@ -351,16 +359,6 @@
     border-color: rgba(255, 95, 143, 0.35);
   }
   
-  .p2 .answer:hover:not(:disabled) {
-    background: 
-      linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
-      rgba(255, 95, 143, 0.25);
-    border-color: var(--p2); /* Bordo acceso all'hover */
-  }
-  
-  
-  
-
   .answer.correct {
     background:var(--good-bg);
     border-color:var(--good);
@@ -393,11 +391,11 @@
     position:absolute;
     top:18px;
     left:50%;
+    z-index:2;
     transform:translateX(-50%);
     display:flex;
     gap:10px;
     white-space:nowrap;
-	z-index: 2;
   }
 
   .badge {
@@ -832,7 +830,7 @@
 
   <main class="center">
     <div class="topbar">
-      <button id="newGame" class="control">↻</button><!-- RESTART -->
+      <button id="newGame" class="control">⟳</button><!-- RESTART -->
       <span id="round" class="badge">Round 1</span>
       <div class="region-picker">
         <button id="regionButton" class="control" type="button" aria-label="Select region: All" aria-haspopup="menu" aria-expanded="false" title="Region: All">🌐</button>
@@ -893,7 +891,7 @@
   <div class="modal">
     <h1 id="winner">🏆 Game Over</h1>
     <div id="result" class="result"></div>
-    <button id="restart" class="restart">RESTART ↻</button>
+    <button id="restart" class="restart">RESTART ⟳</button>
   </div>
 </div>
 
