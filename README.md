@@ -1,0 +1,2 @@
+# flagd
+Flag Duel
