@@ -12,12 +12,12 @@
     --text:#eef;
     --muted:#9ac;
 	--muted-bg:rgba(255,255,255,.10);
-    --p1:#4af;
-    --p2:#f58;
-    --good:#3d9;
-	--good-bg:rgba(53,211,154,.40);
-    --bad:#f67;
-	--bad-bg:rgba(255,96,119,.40);
+    --p1:#00eaff;
+    --p2:#ff2e88;
+    --good:#00ff8c;
+	--good-bg:rgba(0,255,140,.40);
+    --bad:#ff2d55;
+	--bad-bg:rgba(255,45,85,.40);
     --border:rgba(255,255,255,.40);
     --radius-lg:16px;
     --radius-md:10px;
@@ -67,7 +67,7 @@
     justify-content:center;
     overflow:hidden;
     pointer-events:none;
-    color:rgba(140,170,255,.20);
+    color:rgba(0,190,255,.20);
   }
   .globe-bg::after {
     content: "";
@@ -75,7 +75,7 @@
 	width: 100vmax;
     height: 100vmax;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(77, 163, 255, 0.35) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 234, 255, 0.35) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -137,17 +137,17 @@
   .player.p1 {
     background:
       linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 45%),
-      linear-gradient(135deg, rgba(77,163,255,.24), rgba(77,163,255,.03) 65%),
+      linear-gradient(135deg, rgba(0,234,255,.24), rgba(0,234,255,.03) 65%),
       rgba(17,24,43,.4);
-    border-color:rgba(77,163,255,.30);
+    border-color:rgba(0,234,255,.30);
   }
 
   .player.p2 {
     background:
       linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 45%),
-      linear-gradient(225deg, rgba(255,95,143,.24), rgba(255,95,143,.03) 65%),
+      linear-gradient(225deg, rgba(255,46,136,.24), rgba(255,46,136,.03) 65%),
       rgba(17,24,43,.4);
-    border-color:rgba(255,95,143,.30);
+    border-color:rgba(255,46,136,.30);
   }
 
   .name {
@@ -155,6 +155,7 @@
     font-weight:950;
     letter-spacing:-0.06em;
 	white-space: nowrap;
+	text-shadow:0 0 2px currentColor, 0 0 24px currentColor;
   }
 
   .p1 .name { color:var(--p1); }
@@ -206,8 +207,8 @@
     transition:stroke-dashoffset .95s linear, stroke .3s ease;
   }
 
-  .p1 .ring-progress { stroke:var(--p1); }
-  .p2 .ring-progress { stroke:var(--p2); }
+  .p1 .ring-progress { stroke:var(--p1); filter:drop-shadow(0 0 2px var(--p1)); }
+  .p2 .ring-progress { stroke:var(--p2); filter:drop-shadow(0 0 2px var(--p2)); }
   .ring-progress.danger { stroke:var(--bad); }
 
   .score {
@@ -321,14 +322,14 @@
     .p1 .answer:hover:not(:disabled) {
       background: 
         linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
-        rgba(77, 163, 255, 0.25);
+        rgba(0, 234, 255, 0.25);
       border-color:var(--p1);
     }
 
     .p2 .answer:hover:not(:disabled) {
       background: 
         linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.02) 45%),
-        rgba(255, 95, 143, 0.25);
+        rgba(255, 46, 136, 0.25);
       border-color:var(--p2);
     }
   }
@@ -343,31 +344,33 @@
   .answer:disabled { cursor:default; }
 
   
-  /* --- Colori pulsanti Player 1 (Azzurro) --- */
+  /* --- Colori pulsanti Player 1 (Azzurro neon) --- */
   .p1 .answer {
     background: 
       linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
-      rgba(77, 163, 255, 0.12); /* Tinta azzurra */
-    border-color: rgba(77, 163, 255, 0.35);
+      rgba(0, 234, 255, 0.12); /* Tinta azzurra neon */
+    border-color: rgba(0, 234, 255, 0.35);
   }
   
-  /* --- Colori pulsanti Player 2 (Rosa) --- */
+  /* --- Colori pulsanti Player 2 (Rosa neon) --- */
   .p2 .answer {
     background: 
       linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%),
-      rgba(255, 95, 143, 0.12); /* Tinta rosa */
-    border-color: rgba(255, 95, 143, 0.35);
+      rgba(255, 46, 136, 0.12); /* Tinta rosa neon */
+    border-color: rgba(255, 46, 136, 0.35);
   }
   
   .answer.correct {
     background:var(--good-bg);
     border-color:var(--good);
+    xxxfilter:drop-shadow(0 0 2px var(--good));
   }
 
   .answer.wrong {
     background:var(--bad-bg);
     border-color:var(--bad);
-    opacity:.75;
+    opacity:.85;
+    xxxfilter:drop-shadow(0 0 2px var(--bad));
   }
 
   /* Eliminated by the opponent's wrong guess (not this player's own attempt) */
@@ -653,7 +656,7 @@
   
   .subtitle-anim {
 	font-size:clamp(20px,3vw,35px);
-	margin: -6px 0 24px 0;
+	margin: -16px 0 24px 0;
 	letter-spacing:-0.08em;
 	color:transparent;
   }
@@ -679,8 +682,8 @@
   }
 
   @keyframes playPulse {
-    0%,100% { transform:scale(1); box-shadow:0 10px 30px rgba(77,163,255,.35),0 10px 30px rgba(255,95,143,.25); }
-    50%     { transform:scale(1.035); box-shadow:0 14px 40px rgba(77,163,255,.5),0 14px 40px rgba(255,95,143,.4); }
+    0%,100% { transform:scale(1); box-shadow:0 10px 30px rgba(0,234,255,.35),0 10px 30px rgba(255,46,136,.25); }
+    50%     { transform:scale(1.035); box-shadow:0 14px 40px rgba(0,234,255,.5),0 14px 40px rgba(255,46,136,.4); }
   }
 
   /* =========================================================
@@ -714,7 +717,7 @@
 		xxxheight:clamp(76px,22vw,100px); 
 		width: 15vw;
 		height: 15vh;
-		margin:4px 0 12px; 
+		margin:4px 0; 
 	}
     .score { font-size:clamp(24px,8vw,36px); }
 
@@ -881,7 +884,7 @@
 <div id="startOverlay" class="overlay show">
   <div class="modal">
     <h1 class="title-anim">🌍 FLAG DUEL</h1>
-	<p class="subtitle-anim">The Ultimate Country Quiz</h1>
+	<p class="subtitle-anim">The Ultimate Country Quiz</p>
     <p class="subtitle">Guess the flag before your rival does. Wrong or slow answers cost you points — first player to hit zero loses.</p>
     <button id="playBtn" class="play-btn">PLAY ▶︎</button>
   </div>
@@ -1441,7 +1444,7 @@ const countries = [
 
       const rect = answerBoxes[player][index].getBoundingClientRect();
       const playerColor = player === 0 ? "var(--p1)" : "var(--p2)";
-      burstParticles(rect.left + rect.width/2, rect.top + rect.height/2, ["var(--good)", playerColor, "#ffd166"]);
+      burstParticles(rect.left + rect.width*0.5, rect.top + rect.height*0.5, ["var(--good)", playerColor, "#ffd166"]);
 
       playSfx(sfxCorrect);
 
